@@ -19,3 +19,8 @@ Developer docs
 --------------
 
 See http://godoc.org/github.com/msiebuhr/logmunch
+
+License
+-------
+
+ISC
