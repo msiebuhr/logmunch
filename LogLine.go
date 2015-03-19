@@ -29,7 +29,7 @@ func NewLogLine(when time.Time, line string) LogLine {
 func (l *LogLine) String() string {
 	parts := make([]string, 2, len(l.Entries)+2)
 
-	parts[0] = l.Time.Format(time.RFC3339)
+	parts[0] = l.Time.Format(time.RFC3339Nano)
 	parts[1] = l.Name
 
 	// Key-value pairs
