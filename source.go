@@ -66,15 +66,15 @@ func FileSource(config *url.URL, query Query, out chan<- string) (Query, error) 
 func LogEntriesSource(config *url.URL, query Query, out chan<- string) (Query, error) {
 	defer close(out)
 
-    if config.User == nil {
-        return query, errors.New("No LogEntries password set!")
-    }
+	if config.User == nil {
+		return query, errors.New("No LogEntries password set!")
+	}
 
 	password, gotPassword := config.User.Password()
 
-    if !gotPassword {
-        return query, errors.New("No LogEntries password set!")
-    }
+	if !gotPassword {
+		return query, errors.New("No LogEntries password set!")
+	}
 
 	logentriesurl := fmt.Sprintf(
 		"https://pull.logentries.com/%s/hosts/%s/?start=%d&end=%d",
@@ -102,7 +102,7 @@ func LogEntriesSource(config *url.URL, query Query, out chan<- string) (Query, e
 	resp, err := http.Get(logentriesurl)
 
 	if err != nil {
-        close(out)
+		close(out)
 		return query, err
 	}
 
@@ -115,13 +115,13 @@ type SourceLoader struct {
 	Config map[string]url.URL
 }
 
-func (s* SourceLoader) TryLoadConfigs(filenames []string) error {
-    // Create config map if not set
-    if s.Config == nil {
-        s.Config = make(map[string]url.URL)
-    }
+func (s *SourceLoader) TryLoadConfigs(filenames []string) error {
+	// Create config map if not set
+	if s.Config == nil {
+		s.Config = make(map[string]url.URL)
+	}
 
-    // Load files
+	// Load files
 	for _, filename := range filenames {
 		// Load it
 		file, err := os.Open(filename)
@@ -160,7 +160,7 @@ func (s SourceLoader) GetConfig(configUrl string) (Source, *url.URL, error) {
 	if found {
 		// Copy default into new one
 		newConf := &url.URL{
-			Scheme:   defaultConfig.Scheme,
+			Scheme: defaultConfig.Scheme,
 			//Opaque:   defaultConfig.Opaque,
 			User:     defaultConfig.User,
 			Host:     defaultConfig.Host,
@@ -177,12 +177,12 @@ func (s SourceLoader) GetConfig(configUrl string) (Source, *url.URL, error) {
 		}
 		if u.Path != "" {
 			newConf.Path = u.Path
-        } else if u.Opaque != "" {
-            // HACK: Input is sometimes written as `proto:PA/TH`, which
-            // makes the PA/TH end up in the opaque secion. We re-use that
-            // as the path.
-            newConf.Path = u.Opaque
-        }
+		} else if u.Opaque != "" {
+			// HACK: Input is sometimes written as `proto:PA/TH`, which
+			// makes the PA/TH end up in the opaque secion. We re-use that
+			// as the path.
+			newConf.Path = u.Opaque
+		}
 		if u.RawQuery != "" {
 			newConf.RawQuery = u.RawQuery
 		}
@@ -210,7 +210,7 @@ func (s SourceLoader) GetConfig(configUrl string) (Source, *url.URL, error) {
 func (s SourceLoader) GetData(configUrl string, query Query, out chan<- string) (Query, error) {
 	sourceFunc, config, err := s.GetConfig(configUrl)
 	if err != nil {
-        close(out)
+		close(out)
 		return query, err
 	}
 
