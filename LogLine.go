@@ -3,6 +3,7 @@ package logmunch
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -32,13 +33,13 @@ func (l *LogLine) String() string {
 	parts[1] = l.Name
 
 	// Key-value pairs
-	// TODO: Sort keys for consistent output?
 	for key, value := range l.Entries {
 		if strings.Contains(value, " ") {
 			value = fmt.Sprintf(`"%s"`, value)
 		}
 		parts = append(parts, fmt.Sprintf("%s=%s", key, value))
 	}
+	sort.Strings(parts[2:])
 
 	return strings.Join(parts, " ")
 }
