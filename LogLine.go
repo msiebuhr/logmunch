@@ -37,6 +37,9 @@ func (l *LogLine) String() string {
 		if strings.Contains(value, " ") {
 			value = fmt.Sprintf(`"%s"`, value)
 		}
+		if strings.Contains(key, " ") {
+			key = fmt.Sprintf(`"%s"`, key)
+		}
 		parts = append(parts, fmt.Sprintf("%s=%s", key, value))
 	}
 	sort.Strings(parts[2:])
