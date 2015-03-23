@@ -10,6 +10,9 @@ import (
 func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 	defer close(out)
 	for line := range in {
+		logLine := LogLine{
+			Entries: make(map[string]string),
+		}
 
 		// OFFSET ID TIMESTAMP LINE
 		// but also
@@ -20,10 +23,25 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 			continue
 		}
 
-		// Try removing the first element if equal line length
+		// Remove the first element if equal line length
+		// https://tools.ietf.org/html/rfc6587#section-3.4.1
+		// LOG := LEN(LINE) + LINE
 		length, err := strconv.ParseInt(lineParts[0], 10, 32)
-		if err == nil && int(length) == len(line) {
+		if err == nil && int(length) == (len(line)-len(lineParts[0])) {
 			lineParts = lineParts[1:]
+		}
+
+		// Parse out PRIVAL
+		// https://tools.ietf.org/html/rfc5424#section-6.2.1
+		// < + (facility << 3) + severity + > + SYSLOG_VERSION
+		if strings.HasPrefix(lineParts[0], "<") && strings.IndexRune(lineParts[0], '>') != -1 {
+			prival, err := strconv.ParseInt(lineParts[0][1:strings.IndexRune(lineParts[0], '>')], 10, 32)
+			if err == nil {
+				logLine.Entries["syslog.severity"] = fmt.Sprintf("%d", prival&0x7)
+				logLine.Entries["syslog.facility"] = fmt.Sprintf("%d", prival>>3)
+
+				lineParts = lineParts[1:]
+			}
 		}
 
 		// Usually, it's in the beginning
@@ -57,8 +75,9 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 			continue
 		}
 
-		l := LogLine{Time: lineTime, RawLine: []byte(strings.Join(lineParts, " "))}
-		l.parseLogEntries()
-		out <- l
+		logLine.Time = lineTime
+		logLine.RawLine = []byte(strings.Join(lineParts, " "))
+		logLine.parseLogEntries()
+		out <- logLine
 	}
 }

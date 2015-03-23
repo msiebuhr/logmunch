@@ -103,9 +103,7 @@ func (l *LogLine) convertJsonToKeyValues(prefix []byte, in map[string]interface{
 
 func (l *LogLine) parseLogEntries() error {
 	// Don't parse if we already have values
-	if l.Entries != nil {
-		return nil
-	}
+	//if l.Entries != nil { return nil }
 
 	// Try parsing substring as JSON
 	if bytes.IndexRune(l.RawLine, '{') != -1 {
@@ -119,7 +117,14 @@ func (l *LogLine) parseLogEntries() error {
 		}
 	}
 
-	// For name, pick the first thing that isn't a KV-pair
+	// Attempt: Take everything until " - - "
+	idx := bytes.Index(l.RawLine, []byte(" - - "))
+	if idx != -1 {
+		l.Name = string(l.RawLine[:idx])
+		return logfmt.Unmarshal(l.RawLine[idx+5:], l)
+	}
+
+	// Give up: Just take the first thing that doesn't have a = in it.
 	names := bytes.Fields(l.RawLine)
 	for _, name := range names {
 		if bytes.Index(name, []byte{'='}) == -1 {
