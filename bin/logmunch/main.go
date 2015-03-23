@@ -24,7 +24,7 @@ func init() {
 
 	flag.BoolVar(&jsonOutput, "json-output", false, "Output as lines of JSON")
 
-	flag.DurationVar(&roundTime, "round-time", time.Duration(0), "Round timestamps to nearest (ex: '1h10m')")
+	flag.DurationVar(&roundTime, "round-time", time.Nanosecond, "Round timestamps to nearest (ex: '1h10m')")
 	flag.DurationVar(&start, "start", time.Hour*-24, "When to start fetching data")
 	flag.DurationVar(&end, "end", time.Duration(0), "When to stop fetching data")
 
