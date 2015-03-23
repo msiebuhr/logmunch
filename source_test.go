@@ -3,7 +3,6 @@ package logmunch
 import (
 	"net/url"
 	"testing"
-	"time"
 )
 
 func TestSourceLoaderGetSource(t *testing.T) {
