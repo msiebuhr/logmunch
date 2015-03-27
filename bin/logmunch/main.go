@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/mitchellh/go-homedir"
 	"github.com/msiebuhr/logmunch"
 )
 
@@ -37,7 +38,12 @@ func main() {
 	flag.Parse()
 
 	loader := logmunch.SourceLoader{}
-	loader.TryLoadConfigs([]string{"~/.logmunch", "./.logmunch"})
+	fileLocations := []string{"./.logmunch"}
+	dir, err := homedir.Expand("~/.logmunch")
+	if err == nil {
+		fileLocations = append(fileLocations, dir)
+	}
+	loader.TryLoadConfigs(fileLocations)
 
 	lines := make(chan string, 100)
 	logs := make(chan logmunch.LogLine, 100)
