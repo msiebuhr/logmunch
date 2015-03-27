@@ -15,6 +15,13 @@ After that, running `logmunch -source logentries:Test/heroku -filter "H12"
 -limit 10` will fetch ten entries with the text `H12` from `hosts/Test/heroku`
 in logentries.
 
+`logenries:`
+ * https://logentries.com/doc/api-download/
+
+`file:`
+ * Defaults to stdin.
+ * `file:///./local.txt` to read local files.
+
 Developer docs
 --------------
 
