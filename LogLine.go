@@ -1,7 +1,6 @@
 package logmunch
 
 import (
-	"bytes"
 	"fmt"
 	"sort"
 	"strconv"
@@ -9,20 +8,19 @@ import (
 	"time"
 
 	"encoding/json"
-	"github.com/kr/logfmt"
 )
 
 type LogLine struct {
 	Time    time.Time
-	RawLine []byte `json:"-"`
 	Name    string
 	Entries map[string]string
 }
 
-func NewLogLine(when time.Time, line string) LogLine {
+func NewLogLine(when time.Time, name string, entries map[string]string) LogLine {
 	return LogLine{
 		Time:    when,
-		RawLine: []byte(line),
+		Name:    name,
+		Entries: entries,
 	}
 }
 
@@ -61,48 +59,18 @@ func (l LogLine) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// Implements interface from "github.com/kr/logfmt"
 func (l *LogLine) HandleLogfmt(key, val []byte) error {
-	if l.Entries == nil {
-		l.Entries = make(map[string]string)
-	}
 	l.Entries[string(key)] = string(val)
 	return nil
 }
 
-func (l *LogLine) parseLogEntries() error {
-	// Don't parse if we already have values
-	//if l.Entries != nil { return nil }
-
-	// Give up: Just take the first thing that doesn't have a = in it.
-	names := bytes.Fields(l.RawLine)
-	for _, name := range names {
-		if bytes.Index(name, []byte{'='}) == -1 {
-			l.Name = strings.Trim(string(name), " ")
-			break
-		}
-	}
-
-	// Parse values
-	return logfmt.Unmarshal(l.RawLine, l)
-}
-
 func (l *LogLine) HasKey(key string) bool {
-	l.parseLogEntries()
 	_, exists := l.Entries[key]
 	return exists
 }
 
-func (l *LogLine) KeyEqualsString(key, value string) bool {
-	l.parseLogEntries()
-	val, exists := l.Entries[key]
-	if !exists {
-		return false
-	}
-	return val == value
-}
-
 func (l *LogLine) GetNumber(key string) float64 {
-	l.parseLogEntries()
 
 	value, exists := l.Entries[key]
 	if !exists {
@@ -125,6 +93,5 @@ func (l *LogLine) GetNumber(key string) float64 {
 }
 
 func (l *LogLine) HasPrefix(prefix string) bool {
-	l.parseLogEntries()
 	return strings.HasPrefix(l.Name, prefix)
 }
