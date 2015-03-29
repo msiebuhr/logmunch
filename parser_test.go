@@ -13,10 +13,10 @@ func TestParseLines(t *testing.T) {
 	}{
 		// Simple hand-written test
 		{
-			in: `2015-06-12T00:11:22.333Z name {"num": 123}`,
+			in: `2015-06-12T00:11:22.333Z someName {"num": 123}`,
 			out: LogLine{
 				Time:    time.Date(2015, 6, 12, 0, 11, 22, 333000000, time.UTC),
-				Name:    "name",
+				Name:    "someName",
 				Entries: map[string]string{"num": "123"},
 			},
 		},
@@ -79,8 +79,8 @@ func TestParseLines(t *testing.T) {
 				"Expected line\n\t%s\nto have name `%s` but got `%s`",
 				//"Line `%s` parsed out name `%s`, expected `%s`.",
 				tt.in,
-				log.Name,
 				tt.out.Name,
+				log.Name,
 			)
 		}
 

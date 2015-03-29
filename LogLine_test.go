@@ -62,23 +62,3 @@ func TestLogLinesHasPrefix(t *testing.T) {
 		t.Errorf("Expected `%v` to have prefix `some`", l)
 	}
 }
-
-func TestLogLinesParseJsonObject(t *testing.T) {
-	l := NewLogLine(time.Now(), `some.service {"string":"str", "number":123, "bool":true, "nested": {"value": 1}}`)
-	l.parseLogEntries()
-
-	// Expected contents
-	kvs := map[string]string{
-		"string":       "str",
-		"number":       "123",
-		"bool":         "true",
-		"nested.value": "1",
-	}
-
-	for k, v := range kvs {
-		if !l.KeyEqualsString(k, v) {
-			t.Errorf("Expected %v to have key %s=%s", l, k, v)
-		}
-
-	}
-}

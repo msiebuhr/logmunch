@@ -1,6 +1,7 @@
 package logmunch
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -14,6 +15,55 @@ var timeformats []string = []string{
 	// RFC3339 / ISO.. timestamp
 	time.RFC3339Nano,
 	time.RFC3339,
+}
+
+// TODO(msiebuhr): Arrays and nil's
+func flattenAndStringifyJSON(prefix string, data map[string]interface{}, log *LogLine) {
+	for key, value := range data {
+
+		// Compute new key
+		if len(prefix) > 0 {
+			key = strings.Join([]string{prefix, key}, ".")
+		}
+
+		// What to do with values
+		switch t := value.(type) {
+		case bool:
+			if t {
+				log.Entries[key] = "true"
+			} else {
+				log.Entries[key] = "false"
+			}
+		case float64:
+			log.Entries[key] = strconv.FormatFloat(t, 'f', -1, 64)
+		case string:
+			log.Entries[key] = t
+		case map[string]interface{}:
+			flattenAndStringifyJSON(key, t, log)
+		default:
+			//fmt.Println("Doesn't know what to do with", t)
+			log.Entries[key] = fmt.Sprintf("UNSUPPORTED: %+v", t)
+		}
+	}
+}
+
+func tryParseOutJSON(line string, log *LogLine) bool {
+	curlyIndex := strings.IndexRune(line, '{')
+	if curlyIndex == -1 {
+		return false
+	}
+	interfaceMap := make(map[string]interface{})
+	err := json.Unmarshal([]byte(line[curlyIndex:]), &interfaceMap)
+
+	if err != nil {
+		return false
+	}
+
+	// Set line prefix and flatten JSON to one level of strings
+	log.Name = strings.Trim(line[:curlyIndex], " \t")
+	flattenAndStringifyJSON("", interfaceMap, log)
+
+	return true
 }
 
 func ParseLogEntries(in <-chan string, out chan<- LogLine) {
@@ -53,7 +103,8 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 			}
 		}
 
-		// Usually, it's in the beginning
+		// Try parsing each element in the line as various timestamps and see
+		// what sticks.
 		for i, part := range lineParts {
 			for _, timefmt := range timeformats {
 				lineTime, err := time.Parse(timefmt, part)
@@ -71,6 +122,12 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 
 		if logLine.Time.IsZero() {
 			fmt.Printf("Counld not find timestamp in line `%s`.\n", line)
+			continue
+		}
+
+		// The somewhat popular `NAME {… JSON …}`
+		if ok := tryParseOutJSON(strings.Join(lineParts, " "), &logLine); ok {
+			out <- logLine
 			continue
 		}
 

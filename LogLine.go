@@ -69,53 +69,9 @@ func (l *LogLine) HandleLogfmt(key, val []byte) error {
 	return nil
 }
 
-// TODO(msiebuhr): Arrays and nil's
-func (l *LogLine) convertJsonToKeyValues(prefix []byte, in map[string]interface{}) {
-	// l.HandleLogfmt(key, val) on each set of data
-
-	for key, value := range in {
-		var k []byte
-		if len(prefix) > 0 {
-			k = bytes.Join([][]byte{prefix, []byte(key)}, []byte{'.'})
-		} else {
-			k = []byte(key)
-		}
-
-		switch t := value.(type) {
-		case bool:
-			if t {
-				l.HandleLogfmt(k, []byte("true"))
-			} else {
-				l.HandleLogfmt(k, []byte("false"))
-			}
-		case float64:
-			l.HandleLogfmt(k, []byte(strconv.FormatFloat(t, 'f', -1, 64)))
-		case string:
-			l.HandleLogfmt(k, []byte(t))
-		case map[string]interface{}:
-			l.convertJsonToKeyValues(k, t)
-		default:
-			//fmt.Println("Doesn't know what to do with", t)
-			l.HandleLogfmt(k, []byte(fmt.Sprintf("UNSUPPORTED: %+v", t)))
-		}
-	}
-}
-
 func (l *LogLine) parseLogEntries() error {
 	// Don't parse if we already have values
 	//if l.Entries != nil { return nil }
-
-	// Try parsing substring as JSON
-	if bytes.IndexRune(l.RawLine, '{') != -1 {
-		var x map[string]interface{}
-		err := json.Unmarshal(l.RawLine[bytes.IndexRune(l.RawLine, '{'):], &x)
-		// Bingo!
-		if err == nil {
-			l.Name = strings.Trim(string(l.RawLine[:bytes.IndexRune(l.RawLine, '{')]), " ")
-			l.convertJsonToKeyValues([]byte{}, x)
-			return nil
-		}
-	}
 
 	// Attempt: Take everything until " - - "
 	idx := bytes.Index(l.RawLine, []byte(" - - "))
