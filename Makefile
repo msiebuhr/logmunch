@@ -15,6 +15,10 @@ clean:
 test:
 	go test ./...
 
+test-cover-html:
+	go test ./. -coverprofile=cover.out
+	go tool cover -html=cover.out
+
 fmt:
 	go fmt ./...
 
