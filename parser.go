@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/kr/logfmt"
 )
 
 var timeformats []string = []string{
@@ -63,6 +65,19 @@ func tryParseOutJSON(line string, log *LogLine) bool {
 	log.Name = strings.Trim(line[:curlyIndex], " \t")
 	flattenAndStringifyJSON("", interfaceMap, log)
 
+	return true
+}
+
+// Parse out Heroku's LogFmt dyno output
+func tryHerokuLogFmt(line string, log *LogLine) bool {
+	// Name is everything until ` - - `; logfmt follows after
+	dashIndex := strings.Index(line, " - - ")
+	if dashIndex == -1 {
+		return false
+	}
+
+	log.Name = line[:dashIndex]
+	logfmt.Unmarshal([]byte(line[dashIndex+5:]), log)
 	return true
 }
 
@@ -131,8 +146,12 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 			continue
 		}
 
-		logLine.RawLine = []byte(strings.Join(lineParts, " "))
-		logLine.parseLogEntries()
+		// Heroku's `d.UUID NAME - - key=val key=val …` format.
+		if ok := tryHerokuLogFmt(strings.Join(lineParts, " "), &logLine); ok {
+			out <- logLine
+			continue
+		}
+
 		out <- logLine
 	}
 }
