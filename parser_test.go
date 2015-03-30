@@ -6,11 +6,25 @@ import (
 )
 
 func TestParseLines(t *testing.T) {
+	testLogLine := NewLogLine(
+		time.Date(2015, 3, 29, 12, 29, 30, 5000000, time.UTC),
+		"some prefix",
+		map[string]string{
+			"a": "first",
+			"z": "last",
+		},
+	)
 
 	var tests = []struct {
 		in  string
 		out LogLine
 	}{
+		// Programs own stringer
+		{
+			in:  testLogLine.String(),
+			out: testLogLine,
+		},
+
 		// Simple hand-written test
 		{
 			in: `2015-06-12T00:11:22.333Z someName {"num": 123}`,

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/kr/logfmt"
 )
@@ -81,6 +82,23 @@ func tryHerokuLogFmt(line string, log *LogLine) bool {
 	return true
 }
 
+// Try parsing NAME NAME KEY=VALUE
+func tryPrefixedLogFmt(line string, log *LogLine) bool {
+	// Keep track of the last word-break before a word with '=' in it
+	lastSpaceBeforeLogFmtWord := 0
+	for i, letter := range line {
+		if letter == '=' {
+			break
+		}
+		if unicode.IsSpace(letter) {
+			lastSpaceBeforeLogFmtWord = i
+		}
+	}
+	log.Name = line[:lastSpaceBeforeLogFmtWord]
+	logfmt.Unmarshal([]byte(line[lastSpaceBeforeLogFmtWord:]), log)
+	return true
+}
+
 func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 	defer close(out)
 	for line := range in {
@@ -140,18 +158,22 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 			continue
 		}
 
+		restOfLine := strings.Join(lineParts, " ")
+
 		// The somewhat popular `NAME {… JSON …}`
-		if ok := tryParseOutJSON(strings.Join(lineParts, " "), &logLine); ok {
+		if ok := tryParseOutJSON(restOfLine, &logLine); ok {
 			out <- logLine
 			continue
 		}
 
 		// Heroku's `d.UUID NAME - - key=val key=val …` format.
-		if ok := tryHerokuLogFmt(strings.Join(lineParts, " "), &logLine); ok {
+		if ok := tryHerokuLogFmt(restOfLine, &logLine); ok {
 			out <- logLine
 			continue
 		}
 
+		// Give up. `THINGS WITHOUT EQUALS key=value key=value …`
+		tryPrefixedLogFmt(restOfLine, &logLine)
 		out <- logLine
 	}
 }
