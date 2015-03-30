@@ -1,13 +1,12 @@
 package logmunch
 
 import (
-	"time"
 	"testing"
+	"time"
 )
 
 func TestQueryGroup(t *testing.T) {
-	l := NewLogLine(time.Now(), "a=b c=d")
-    l.parseLogEntries()
+	l := NewLogLine(time.Now(), "prefix", map[string]string{"a": "b", "c": "d"})
 
 	var tests = []struct {
 		in  QueryGroup
