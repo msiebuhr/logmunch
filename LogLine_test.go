@@ -86,8 +86,6 @@ func TestLogLinesJSONEncoder(t *testing.T) {
 		t.Fatalf("Failed mashalling JSON: %s", err)
 	}
 
-	t.Logf("%v", string(j))
-
 	// Decode again
 	var out map[string]interface{}
 	err = json.Unmarshal(j, &out)
