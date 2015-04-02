@@ -92,6 +92,10 @@ func (l *LogLine) GetNumber(key string) float64 {
 	return n
 }
 
+func (l *LogLine) SetNumber(key string, val float64) {
+	l.Entries[key] = strconv.FormatFloat(val, 'f', -1, 64)
+}
+
 func (l *LogLine) HasPrefix(prefix string) bool {
 	return strings.HasPrefix(l.Name, prefix)
 }

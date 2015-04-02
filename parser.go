@@ -38,7 +38,7 @@ func flattenAndStringifyJSON(prefix string, data map[string]interface{}, log *Lo
 				log.Entries[key] = "false"
 			}
 		case float64:
-			log.Entries[key] = strconv.FormatFloat(t, 'f', -1, 64)
+			log.SetNumber(key, t)
 		case string:
 			log.Entries[key] = t
 		case map[string]interface{}:
