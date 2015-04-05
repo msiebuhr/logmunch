@@ -50,3 +50,16 @@ func TestBucketizeKey(t *testing.T) {
 		t.Errorf("Expected %v to be %v", fl.Entries["in"], "10")
 	}
 }
+
+func TestCompoundKey(t *testing.T) {
+	log := NewLogLine(time.Now(), "what", map[string]string{
+		"num": "123",
+		"str": "abc",
+	})
+
+	nl := MakeCompondKey("com", []string{"num", "missing", "str"})(&log)
+
+	if val, ok := nl.Entries["com"]; !ok || val != "123-∅-abc" {
+		t.Errorf("Expected key 'com' to be '123-∅-abc', got %v", val)
+	}
+}

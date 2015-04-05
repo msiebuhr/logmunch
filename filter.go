@@ -2,6 +2,7 @@ package logmunch
 
 import (
 	"math"
+	"strings"
 	"time"
 )
 
@@ -95,6 +96,25 @@ func MakeBucketizeKey(key string) func(*LogLine) *LogLine {
 
 		// Strip all digits after the bucket-size
 		in.SetNumber(key, math.Trunc(v/bucketSize)*bucketSize)
+
+		return in
+	}
+}
+
+// Make a new key, `newKey`, based on a concatenation of `sourceKeys`.
+func MakeCompondKey(newKey string, sourceKeys []string) func(*LogLine) *LogLine {
+	return func(in *LogLine) *LogLine {
+		newKeyParts := make([]string, len(sourceKeys))
+
+		for i, key := range sourceKeys {
+			val, ok := in.Entries[key]
+			if !ok {
+				val = "∅"
+			}
+			newKeyParts[i] = val
+		}
+
+		in.Entries[newKey] = strings.Join(newKeyParts, "-")
 
 		return in
 	}

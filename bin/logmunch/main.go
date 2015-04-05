@@ -21,6 +21,7 @@ var jsonOutput bool
 var limit int
 var bucketizeKeys string
 var pickKeys string
+var compoundKeys string
 
 func init() {
 	flag.StringVar(&source, "source", "Production/api", "Log source")
@@ -38,6 +39,7 @@ func init() {
 	flag.DurationVar(&roundTime, "round-time", time.Nanosecond, "Round timestamps to nearest (ex: '1h10m')")
 	flag.StringVar(&bucketizeKeys, "bucketize", "", "Bucketize this key")
 	flag.StringVar(&pickKeys, "pick", "", "Keep only these keys")
+	flag.StringVar(&compoundKeys, "compound", "", "Combine new,old1,old2,…")
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 }
@@ -76,6 +78,18 @@ func main() {
 
 	// Filter the loglines
 	filters := []logmunch.Filterer{}
+
+	if compoundKeys != "" {
+		keys := strings.Split(compoundKeys, ",")
+		if len(keys) <= 2 {
+			fmt.Println("Cannot use -compound with less than two arguments.")
+		} else {
+			filters = append(
+				filters,
+				logmunch.MakeCompondKey(keys[0], keys[1:]),
+			)
+		}
+	}
 
 	if pickKeys != "" {
 		keys := strings.Split(pickKeys, ",")
