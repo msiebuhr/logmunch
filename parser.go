@@ -106,6 +106,12 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 			Entries: make(map[string]string),
 		}
 
+		// Some log-lines from Heroku has a leading `d `, which I can't figure out.
+		// So out it goes
+		if line[0] == 'd' && line[1] == ' ' {
+			line = line[2:]
+		}
+
 		// OFFSET ID TIMESTAMP LINE
 		// but also
 		// TIMESTAMP LINE

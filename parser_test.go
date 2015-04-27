@@ -58,6 +58,29 @@ func TestParseLines(t *testing.T) {
 				},
 			},
 		},
+		{
+			in: `d 323 <158>1 2015-04-07T09:30:14.632370+00:00 d.f12ee345-3239-4fde-8dc6-b5d1c5656c36 heroku router - - at=info method=POST path="/v1/session/yatzy-planet-earth/document" host=api.g2m.me request_id=2466f062-3188-4d78-94f5-07afd45c2381 fwd="202.56.197.65,108.162.225.148" dyno=web.1 connect=1ms service=6304ms status=200 bytes=268`,
+			out: LogLine{
+				Time: time.Date(2015, 4, 7, 9, 30, 14, 632370000, time.UTC),
+				Name: "d.f12ee345-3239-4fde-8dc6-b5d1c5656c36 heroku router",
+				Entries: map[string]string{
+					"at":              "info",
+					"method":          "POST",
+					"path":            "/v1/session/yatzy-planet-earth/document",
+					"host":            "api.g2m.me",
+					"request_id":      "2466f062-3188-4d78-94f5-07afd45c2381",
+					"fwd":             "202.56.197.65,108.162.225.148",
+					"dyno":            "web.1",
+					"connect":         "1ms",
+					"service":         "6304ms",
+					"status":          "200",
+					"bytes":           "268",
+					"syslog.severity": "6",
+					"syslog.facility": "19",
+				},
+			},
+		},
+
 		// Node.js' Winston output
 		{
 			in: `2015-03-20T19:30:35.520Z info middleware.auth.jwt.success {"tokenData":{},"clientId":"g2m-free-web","requestId":"798bbab8-7544-4513-9943-26cfdddec183","dyno":"web.1"}`,
@@ -115,7 +138,7 @@ func TestParseLines(t *testing.T) {
 			if !hasValue {
 				t.Errorf("Line `%s` misses key %s (=%v)", tt.in, key, expectedValue)
 			} else if expectedValue != value {
-				t.Errorf("Line `%s` should have value %s for key %s, got %s", tt.in, expectedValue, key, value)
+				t.Errorf("Line `%s` should have value\n%s\n\tfor key %s, got\n%s", tt.in, expectedValue, key, value)
 			}
 		}
 
