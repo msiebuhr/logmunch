@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -18,6 +18,7 @@ var roundTime time.Duration
 var start time.Duration
 var end time.Duration
 var jsonOutput bool
+var outputGnuplotCount string
 var limit int
 var bucketizeKeys string
 var pickKeys string
@@ -34,6 +35,7 @@ func init() {
 
 	// Output-control
 	flag.BoolVar(&jsonOutput, "json-output", false, "Output as lines of JSON")
+	flag.StringVar(&outputGnuplotCount, "output-gnuplot-count", "", "Output as lines of Gnuplot of frequency counts")
 
 	// Filtering
 	flag.DurationVar(&roundTime, "round-time", time.Nanosecond, "Round timestamps to nearest (ex: '1h10m')")
@@ -79,6 +81,12 @@ func main() {
 	// Filter the loglines
 	filters := []logmunch.Filterer{}
 
+	if bucketizeKeys != "" {
+		for _, key := range strings.Split(bucketizeKeys, ",") {
+			filters = append(filters, logmunch.MakeBucketizeKey(key))
+		}
+	}
+
 	if compoundKeys != "" {
 		keys := strings.Split(compoundKeys, ",")
 		if len(keys) <= 2 {
@@ -99,25 +107,14 @@ func main() {
 	if roundTime != 0 {
 		filters = append(filters, logmunch.MakeRoundTimestampFilter(roundTime))
 	}
-	if bucketizeKeys != "" {
-		for _, key := range strings.Split(bucketizeKeys, ",") {
-			filters = append(filters, logmunch.MakeBucketizeKey(key))
-		}
-	}
 
 	go logmunch.FilterLogChan(filters, logs, filtered)
 
-	// Print the logs
-	for line := range filtered {
-		// Round timestamps (should probably be in a go-routine of it's own
-		// Print as logfmt'd stuff
-		if jsonOutput {
-			out, err := json.Marshal(line)
-			if err == nil {
-				fmt.Println(string(out))
-			}
-		} else {
-			fmt.Println(line.String())
-		}
+	if jsonOutput {
+		logmunch.DrainJson()(filtered, os.Stdout)
+	} else if outputGnuplotCount != "" {
+		logmunch.DrainGnuplotDistinctKeyCount(outputGnuplotCount)(filtered, os.Stdout)
+	} else {
+		logmunch.DrainStandard()(filtered, os.Stdout)
 	}
 }
