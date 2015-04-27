@@ -157,7 +157,8 @@ func MakeNormaliseUrlPaths(key string, urlTemplates []string) func(*LogLine) *Lo
 	}
 
 	return func(in *LogLine) *LogLine {
-		// Does it have the key we need to check against?
+		// TODO: Does it have the key we need to check against?
+
 		for i, re := range regexps {
 			// Check key against regexes
 			if !re.MatchString(in.Entries[key]) {
@@ -173,6 +174,43 @@ func MakeNormaliseUrlPaths(key string, urlTemplates []string) func(*LogLine) *Lo
 
 			in.Entries[key] = urlTemplates[i]
 		}
+
+		return in
+	}
+}
+
+// Make a new key, `newKey`, based on a concatenation of `sourceKeys`.
+func MakeRemoveHerokuDrainId() func(*LogLine) *LogLine {
+	var indices = []struct {
+		at   int
+		char uint8
+	}{
+		{0, 'd'},
+		{1, '.'},
+		{10, '-'},
+		{15, '-'},
+		{20, '-'},
+		{25, '-'},
+		{38, ' '},
+	}
+	return func(in *LogLine) *LogLine {
+		// FIXME: Correct offset?
+		if len(in.Name) < 38 {
+			return in
+		}
+
+		// Check the required chars are there
+		for _, t := range indices {
+			if in.Name[t.at] != t.char {
+				return in
+			}
+		}
+
+		// TODO: Check everything else is hexadecimal
+
+		// It's a valid prefix! Dump it to a key!
+		in.Entries["drainId"] = in.Name[:38]
+		in.Name = in.Name[39:]
 
 		return in
 	}

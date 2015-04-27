@@ -18,6 +18,7 @@ var roundTime time.Duration
 var start time.Duration
 var end time.Duration
 var jsonOutput bool
+var filterHerokuLogs bool
 var outputGnuplotCount string
 var limit int
 var bucketizeKeys string
@@ -40,6 +41,7 @@ func init() {
 
 	// Filtering
 	flag.DurationVar(&roundTime, "round-time", time.Nanosecond, "Round timestamps to nearest (ex: '1h10m')")
+	flag.BoolVar(&filterHerokuLogs, "-filter-heroku-logs", true, "Magic parsing of Heroku logs")
 	flag.StringVar(&bucketizeKeys, "bucketize", "", "Bucketize this key")
 	flag.StringVar(&normalisePaths, "normalise-paths", "", "Normalize URL paths with `:name` placeholders")
 	flag.StringVar(&pickKeys, "pick", "", "Keep only these keys")
@@ -82,6 +84,10 @@ func main() {
 
 	// Filter the loglines
 	filters := []logmunch.Filterer{}
+
+	if filterHerokuLogs {
+		filters = append(filters, logmunch.MakeRemoveHerokuDrainId())
+	}
 
 	if normalisePaths != "" {
 		keys := strings.Split(normalisePaths, ",")

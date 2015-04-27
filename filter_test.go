@@ -79,3 +79,17 @@ func TestNormailseUrlPaths(t *testing.T) {
 		t.Errorf("Expected key 'uid' to be 'user_name', got '%v'", val)
 	}
 }
+
+func TestRemoveHerokuDrainId(t *testing.T) {
+	log := NewLogLine(time.Now(), "d.f12ee345-3239-4fde-8dc6-b5d1c5656c36 what", map[string]string{})
+
+	nl := MakeRemoveHerokuDrainId()(&log)
+
+	if val, ok := nl.Entries["drainId"]; !ok || val != "d.f12ee345-3239-4fde-8dc6-b5d1c5656c36" {
+		t.Errorf("Expected key 'drainId' to be 'd.f12ee345-3239-4fde-8dc6-b5d1c5656c36', got '%v'", val)
+	}
+
+	if nl.Name != "what" {
+		t.Errorf("Expected name 'what', got '%v'", nl.Name)
+	}
+}
