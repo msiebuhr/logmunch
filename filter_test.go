@@ -63,3 +63,19 @@ func TestCompoundKey(t *testing.T) {
 		t.Errorf("Expected key 'com' to be '123-∅-abc', got %v", val)
 	}
 }
+
+func TestNormailseUrlPaths(t *testing.T) {
+	log := NewLogLine(time.Now(), "what", map[string]string{
+		"path": "/test/user_name/action",
+	})
+
+	nl := MakeNormaliseUrlPaths("path", []string{"/test/:uid/action", "/test/:uid"})(&log)
+
+	if val, ok := nl.Entries["path"]; !ok || val != "/test/:uid/action" {
+		t.Errorf("Expected key 'path' to be '/test/:uid/action', got '%v'", val)
+	}
+
+	if val, ok := nl.Entries["uid"]; !ok || val != "user_name" {
+		t.Errorf("Expected key 'uid' to be 'user_name', got '%v'", val)
+	}
+}

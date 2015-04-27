@@ -21,6 +21,7 @@ var jsonOutput bool
 var outputGnuplotCount string
 var limit int
 var bucketizeKeys string
+var normalisePaths string
 var pickKeys string
 var compoundKeys string
 
@@ -40,6 +41,7 @@ func init() {
 	// Filtering
 	flag.DurationVar(&roundTime, "round-time", time.Nanosecond, "Round timestamps to nearest (ex: '1h10m')")
 	flag.StringVar(&bucketizeKeys, "bucketize", "", "Bucketize this key")
+	flag.StringVar(&normalisePaths, "normalise-paths", "", "Normalize URL paths with `:name` placeholders")
 	flag.StringVar(&pickKeys, "pick", "", "Keep only these keys")
 	flag.StringVar(&compoundKeys, "compound", "", "Combine new,old1,old2,…")
 
@@ -80,6 +82,18 @@ func main() {
 
 	// Filter the loglines
 	filters := []logmunch.Filterer{}
+
+	if normalisePaths != "" {
+		keys := strings.Split(normalisePaths, ",")
+		if len(keys) < 2 {
+			fmt.Println("Cannot use -normalise-paths withe one argument (ex: `path,/users/:uid`)")
+		} else {
+			filters = append(
+				filters,
+				logmunch.MakeNormaliseUrlPaths(keys[0], keys[1:]),
+			)
+		}
+	}
 
 	if bucketizeKeys != "" {
 		for _, key := range strings.Split(bucketizeKeys, ",") {

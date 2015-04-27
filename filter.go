@@ -1,7 +1,9 @@
 package logmunch
 
 import (
+	"fmt"
 	"math"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -115,6 +117,62 @@ func MakeCompondKey(newKey string, sourceKeys []string) func(*LogLine) *LogLine 
 		}
 
 		in.Entries[newKey] = strings.Join(newKeyParts, "-")
+
+		return in
+	}
+}
+
+// Normalise paths from a given URL after given express-style templates.
+//
+// Ex `path=/users/msiebuhr/add` w. template `/users/:uid/add` will normalize
+// to `path=/users/:uid/add uid=msiebuhr`.
+func MakeNormaliseUrlPaths(key string, urlTemplates []string) func(*LogLine) *LogLine {
+	regexps := make([]*regexp.Regexp, len(urlTemplates))
+	converterRegex, err := regexp.Compile(":[^/]+")
+
+	if err != nil {
+		panic(err)
+	}
+
+	// Convert URL templates to Regular expressions
+	for i, templ := range urlTemplates {
+		// Quite slashes &c.
+		withQuotedMeta := regexp.QuoteMeta(templ)
+
+		// Switch out :[^\/]+ for capture groups
+		withQuotedMeta = converterRegex.ReplaceAllStringFunc(withQuotedMeta, func(group string) string {
+			return fmt.Sprintf("(?P<%s>[^/]+)", group[1:])
+		})
+
+		// Add start and end guards
+		withQuotedMeta = fmt.Sprintf("^%s$", withQuotedMeta)
+
+		re, err := regexp.Compile(withQuotedMeta)
+
+		if err != nil {
+			panic(err)
+		}
+
+		regexps[i] = re
+	}
+
+	return func(in *LogLine) *LogLine {
+		// Does it have the key we need to check against?
+		for i, re := range regexps {
+			// Check key against regexes
+			if !re.MatchString(in.Entries[key]) {
+				continue
+			}
+
+			subMatchNames := re.SubexpNames()
+			subMatchValues := re.FindStringSubmatch(in.Entries[key])
+
+			for j := 1; j < len(subMatchNames); j += 1 {
+				in.Entries[subMatchNames[j]] = subMatchValues[j]
+			}
+
+			in.Entries[key] = urlTemplates[i]
+		}
 
 		return in
 	}
