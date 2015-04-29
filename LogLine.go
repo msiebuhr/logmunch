@@ -78,7 +78,7 @@ func (l *LogLine) GetNumber(key string) float64 {
 	}
 
 	numbersInValue := strings.Map(func(r rune) rune {
-		if (r >= '0' && '9' >= r) || r == '.' {
+		if (r >= '0' && '9' >= r) || r == '.' || r == '-' {
 			return r
 		}
 		return -1

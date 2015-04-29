@@ -154,6 +154,10 @@ func TestBucketizeKey(t *testing.T) {
 			in:  &LogLine{time.Now(), "a", map[string]string{"v": "411.6"}},
 			out: &LogLine{time.Now(), "a", map[string]string{"v": "400"}},
 		},
+		filterTest{
+			in:  &LogLine{time.Now(), "a", map[string]string{"v": "-411.6"}},
+			out: &LogLine{time.Now(), "a", map[string]string{"v": "-400"}},
+		},
 		filterTest{in: nil, out: nil},
 	}
 

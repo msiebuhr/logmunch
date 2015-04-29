@@ -13,6 +13,7 @@ func TestLogLinesGetters(t *testing.T) {
 		"f": "1.2",
 		"s": "string",
 		"m": "12ms",
+		"n": "-12hours",
 	})
 
 	// Existance and non-existance
@@ -45,6 +46,12 @@ func TestLogLinesGetters(t *testing.T) {
 	n = l.GetNumber("m")
 	if n != 12 {
 		t.Errorf("Expected %+v to have m=12, got %+v\n", l, n)
+	}
+
+	// Mixed negative as float
+	n = l.GetNumber("n")
+	if n != -12 {
+		t.Errorf("Expected %+v to have n=-12, got %+v\n", l, n)
 	}
 
 	// Missing as float
