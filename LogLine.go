@@ -99,3 +99,33 @@ func (l *LogLine) SetNumber(key string, val float64) {
 func (l *LogLine) HasPrefix(prefix string) bool {
 	return strings.HasPrefix(l.Name, prefix)
 }
+
+func (l LogLine) Equal(other LogLine) bool {
+	// Compare name
+	if l.Name != other.Name {
+		return false
+	}
+
+	// Compare time
+	if !l.Time.Equal(other.Time) {
+		return false
+	}
+
+	// Check all Entries in l match ones in other
+	for key, expectedValue := range l.Entries {
+		actualValue, hasKey := other.Entries[key]
+		if !hasKey || expectedValue != actualValue {
+			return false
+		}
+	}
+
+	// Check other don't have too many entries
+	for key := range other.Entries {
+		_, hasKey := l.Entries[key]
+		if !hasKey {
+			return false
+		}
+	}
+
+	return true
+}

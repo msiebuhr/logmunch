@@ -110,43 +110,13 @@ func TestParseLines(t *testing.T) {
 		close(in)
 		log := <-out
 
-		// Check name
-		if log.Name != tt.out.Name {
+		if !log.Equal(tt.out) {
 			t.Errorf(
-				"Expected line\n\t%s\nto have name `%s` but got `%s`",
-				//"Line `%s` parsed out name `%s`, expected `%s`.",
+				"Expected line\n\t%s\nto parse as\n\t%s\nbut got\n\t%s",
 				tt.in,
 				tt.out.Name,
 				log.Name,
 			)
-		}
-
-		// Timestamp
-		if !log.Time.Equal(tt.out.Time) {
-			t.Errorf(
-				"Expected line\n\t%s\nto have time `%s` but got `%s`",
-				//"Line `%s` parsed out time `%s`, expected `%s`.",
-				tt.in,
-				tt.out.Time,
-				log.Time,
-			)
-		}
-
-		// Check parsed out items are all present in the expected output
-		for key, expectedValue := range tt.out.Entries {
-			value, hasValue := log.Entries[key]
-			if !hasValue {
-				t.Errorf("Line `%s` misses key %s (=%v)", tt.in, key, expectedValue)
-			} else if expectedValue != value {
-				t.Errorf("Line `%s` should have value\n%s\n\tfor key %s, got\n%s", tt.in, expectedValue, key, value)
-			}
-		}
-
-		// Check there is no extraneous keys parsed out
-		for key := range log.Entries {
-			if _, ok := tt.out.Entries[key]; !ok {
-				t.Errorf("Line `%s` has unexpected key %s", tt.in, key)
-			}
 		}
 	}
 }

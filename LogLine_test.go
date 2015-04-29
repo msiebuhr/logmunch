@@ -119,3 +119,27 @@ func TestLogLinesJSONEncoder(t *testing.T) {
 		t.Errorf("JSON %s misses .entries.", out)
 	}
 }
+
+func TestLogLinesEqual(t *testing.T) {
+	l := NewLogLine(
+		time.Date(2015, 3, 29, 12, 29, 30, 5000000, time.UTC),
+		"some prefix",
+		map[string]string{"key": "first"},
+	)
+
+	l2 := NewLogLine(
+		time.Date(2015, 3, 29, 12, 29, 30, 5000000, time.UTC),
+		"some prefix",
+		map[string]string{"key": "first"},
+	)
+
+	if !l.Equal(l2) {
+		t.Errorf("Expected\n\t%s\nto equal\n\t%v", l, l2)
+	}
+
+	l2.Entries["key2"] = "second"
+
+	if l.Equal(l2) {
+		t.Errorf("Expected\n\t%s\nnot to equal\n\t%v", l, l2)
+	}
+}
