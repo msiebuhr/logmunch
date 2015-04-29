@@ -28,7 +28,7 @@ var pickKeys string
 var compoundKeys string
 
 func init() {
-	flag.StringVar(&source, "source", "Production/api", "Log source")
+	flag.StringVar(&source, "source", "file:-", "Log source (default: stdin)")
 	flag.StringVar(&filter, "filter", "", "Prefix to fetch")
 
 	flag.DurationVar(&start, "start", time.Hour*-24, "When to start fetching data")
