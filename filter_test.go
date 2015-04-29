@@ -37,20 +37,6 @@ func TestRoundTimestampFilter(t *testing.T) {
 	}
 }
 
-// TODO: Table-driven test
-func TestBucketizeKey(t *testing.T) {
-	n := time.Now()
-	log := NewLogLine(n, "what", map[string]string{"in": "11"})
-
-	filter := MakeBucketizeKey("in")
-
-	fl := filter(&log)
-
-	if val, ok := fl.Entries["in"]; !ok || val != "10" {
-		t.Errorf("Expected %v to be %v", fl.Entries["in"], "10")
-	}
-}
-
 func TestCompoundKey(t *testing.T) {
 	log := NewLogLine(time.Now(), "what", map[string]string{
 		"num": "123",
@@ -64,32 +50,113 @@ func TestCompoundKey(t *testing.T) {
 	}
 }
 
-func TestNormailseUrlPaths(t *testing.T) {
-	log := NewLogLine(time.Now(), "what", map[string]string{
-		"path": "/test/user_name/action?token=should_be_removed",
-	})
+type filterTest struct {
+	in  *LogLine
+	out *LogLine
+}
 
-	nl := MakeNormaliseUrlPaths("path", []string{"/test/:uid/action", "/test/:uid"})(&log)
+type filterTests []filterTest
 
-	if val, ok := nl.Entries["path"]; !ok || val != "/test/:uid/action" {
-		t.Errorf("Expected key 'path' to be '/test/:uid/action', got '%v'", val)
+// Run all given tests though the filter
+func (f filterTests) run(filter Filterer, t *testing.T) {
+	for _, tt := range f {
+		res := filter(tt.in)
+
+		// Both nil? Then OK
+		if tt.out == nil && res == nil {
+			return
+		}
+
+		if !tt.out.Equal(*res) {
+			t.Errorf("Expected log\n\t%s\nto equal\n\t%s", res, tt.out)
+		}
 	}
+}
 
-	if val, ok := nl.Entries["uid"]; !ok || val != "user_name" {
-		t.Errorf("Expected key 'uid' to be 'user_name', got '%v'", val)
+func (f filterTests) normalizeTimestamps() {
+	t := time.Now()
+
+	for _, tt := range f {
+		if tt.in != nil {
+			tt.in.Time = t
+		}
+		if tt.out != nil {
+			tt.out.Time = t
+		}
 	}
 }
 
 func TestRemoveHerokuDrainId(t *testing.T) {
-	log := NewLogLine(time.Now(), "d.f12ee345-3239-4fde-8dc6-b5d1c5656c36 what", map[string]string{})
-
-	nl := MakeRemoveHerokuDrainId()(&log)
-
-	if val, ok := nl.Entries["drainId"]; !ok || val != "d.f12ee345-3239-4fde-8dc6-b5d1c5656c36" {
-		t.Errorf("Expected key 'drainId' to be 'd.f12ee345-3239-4fde-8dc6-b5d1c5656c36', got '%v'", val)
+	tests := filterTests{
+		filterTest{
+			in: &LogLine{
+				Time:    time.Now(),
+				Name:    "d.f12ee345-3239-4fde-8dc6-b5d1c5656c36 what",
+				Entries: map[string]string{},
+			},
+			out: &LogLine{
+				Time:    time.Now(),
+				Name:    "what",
+				Entries: map[string]string{"drainId": "d.f12ee345-3239-4fde-8dc6-b5d1c5656c36"},
+			},
+		},
+		filterTest{
+			in: &LogLine{
+				Time:    time.Now(),
+				Name:    "no id",
+				Entries: map[string]string{},
+			},
+			out: &LogLine{
+				Time:    time.Now(),
+				Name:    "no id",
+				Entries: map[string]string{},
+			},
+		},
+		filterTest{in: nil, out: nil},
 	}
 
-	if nl.Name != "what" {
-		t.Errorf("Expected name 'what', got '%v'", nl.Name)
+	tests.normalizeTimestamps()
+	tests.run(MakeRemoveHerokuDrainId(), t)
+}
+
+func TestNormailseUrlPaths(t *testing.T) {
+	tests := filterTests{
+		filterTest{
+			in:  &LogLine{time.Now(), "a", map[string]string{"path": "/users/NAME/avatar"}},
+			out: &LogLine{time.Now(), "a", map[string]string{"path": "/users/:uid/avatar", "uid": "NAME"}},
+		},
+		filterTest{
+			in:  &LogLine{time.Now(), "a", map[string]string{"path": "/users/NAME"}},
+			out: &LogLine{time.Now(), "a", map[string]string{"path": "/users/:uid", "uid": "NAME"}},
+		},
+		filterTest{
+			in:  &LogLine{time.Now(), "a", map[string]string{"path": "/no/match"}},
+			out: &LogLine{time.Now(), "a", map[string]string{"path": "/no/match"}},
+		},
+		filterTest{
+			in:  &LogLine{time.Now(), "a", map[string]string{"other": "key"}},
+			out: &LogLine{time.Now(), "a", map[string]string{"other": "key"}},
+		},
+		filterTest{in: nil, out: nil},
 	}
+
+	tests.normalizeTimestamps()
+	tests.run(MakeNormaliseUrlPaths("path", []string{"/users/:uid/avatar", "/users/:uid"}), t)
+}
+
+func TestBucketizeKey(t *testing.T) {
+	tests := filterTests{
+		filterTest{
+			in:  &LogLine{time.Now(), "a", map[string]string{"v": "1.1"}},
+			out: &LogLine{time.Now(), "a", map[string]string{"v": "1"}},
+		},
+		filterTest{
+			in:  &LogLine{time.Now(), "a", map[string]string{"v": "411.6"}},
+			out: &LogLine{time.Now(), "a", map[string]string{"v": "400"}},
+		},
+		filterTest{in: nil, out: nil},
+	}
+
+	tests.normalizeTimestamps()
+	tests.run(MakeBucketizeKey("v"), t)
 }

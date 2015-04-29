@@ -80,6 +80,10 @@ func MakeRoundTimestampFilter(d time.Duration) func(*LogLine) *LogLine {
 // Note: Round down here actually meands "towards zero"
 func MakeBucketizeKey(key string) func(*LogLine) *LogLine {
 	return func(in *LogLine) *LogLine {
+		if in == nil {
+			return nil
+		}
+
 		if !in.HasKey(key) {
 			return in
 		}
@@ -157,8 +161,16 @@ func MakeNormaliseUrlPaths(key string, urlTemplates []string) func(*LogLine) *Lo
 	}
 
 	return func(in *LogLine) *LogLine {
-		// TODO: Does it have the key we need to check against?
+		if in == nil {
+			return nil
+		}
 
+		// Bail if it doesn't have the right key
+		if !in.HasKey(key) {
+			return in
+		}
+
+		// Check key against regex'es
 		for i, re := range regexps {
 			// Get key and dump query-string
 			name := strings.SplitN(in.Entries[key], "?", 2)[0]
@@ -197,6 +209,10 @@ func MakeRemoveHerokuDrainId() func(*LogLine) *LogLine {
 		{38, ' '},
 	}
 	return func(in *LogLine) *LogLine {
+		if in == nil {
+			return nil
+		}
+
 		// FIXME: Correct offset?
 		if len(in.Name) < 38 {
 			return in
