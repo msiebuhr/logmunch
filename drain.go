@@ -38,6 +38,64 @@ func (t timeList) Len() int           { return len(t) }
 func (t timeList) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 func (t timeList) Less(i, j int) bool { return t[i].Before(t[j]) }
 
+func DrainCountOverTime(key string) func(<-chan LogLine, io.Writer) {
+	return func(in <-chan LogLine, out io.Writer) {
+		keyValues := make(map[string]bool)
+		data := make(map[time.Time]map[string]int)
+
+		curTime := time.Unix(0, 0)
+
+		for l := range in {
+			// Fish out different values of the keys
+			keyValues[l.Entries[key]] = true
+
+			// Keep track of current time
+			if !curTime.Equal(l.Time) {
+				curTime = l.Time
+				// FIXME: Check if key already exists
+				data[curTime] = make(map[string]int)
+			}
+
+			// Make sure the counter has been initalized
+			if _, ok := data[curTime][l.Entries[key]]; !ok {
+				data[curTime][l.Entries[key]] = 0
+			}
+
+			data[curTime][l.Entries[key]] += 1
+		}
+
+		// Sort the keys
+		sortedKeys := make([]string, 0, len(keyValues))
+		for k := range keyValues {
+			sortedKeys = append(sortedKeys, k)
+		}
+		sort.Strings(sortedKeys)
+
+		// Sort the timestamps
+		var sortedTimestamps timeList = make([]time.Time, 0, len(data))
+		for t := range data {
+			sortedTimestamps = append(sortedTimestamps, t)
+		}
+		sort.Sort(sortedTimestamps)
+
+		// Loop over timestamps, then keys and print it all
+		for _, t := range sortedTimestamps {
+			out.Write([]byte(t.Format(time.RFC3339Nano)))
+			out.Write([]byte{'\n'})
+
+			for _, k := range sortedKeys {
+				v := "0"
+
+				if val, ok := data[t][k]; ok {
+					v = fmt.Sprintf("%d", val)
+				}
+
+				out.Write([]byte(fmt.Sprintf("\t%s:%s\n", k, v)))
+			}
+		}
+	}
+}
+
 func DrainGnuplotDistinctKeyCount(key string) func(<-chan LogLine, io.Writer) {
 	return func(in <-chan LogLine, out io.Writer) {
 		keyValues := make(map[string]bool)

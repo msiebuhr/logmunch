@@ -20,6 +20,7 @@ var end time.Duration
 var jsonOutput bool
 var filterHerokuLogs bool
 var outputGnuplotCount string
+var outputTableCount string
 var limit int
 var bucketizeKeys string
 var normalisePaths string
@@ -38,6 +39,7 @@ func init() {
 	// Output-control
 	flag.BoolVar(&jsonOutput, "json-output", false, "Output as lines of JSON")
 	flag.StringVar(&outputGnuplotCount, "output-gnuplot-count", "", "Output as lines of Gnuplot of frequency counts")
+	flag.StringVar(&outputTableCount, "output-table-count", "", "Output as table of counts")
 
 	// Filtering
 	flag.DurationVar(&roundTime, "round-time", time.Nanosecond, "Round timestamps to nearest (ex: '1h10m')")
@@ -134,6 +136,8 @@ func main() {
 		logmunch.DrainJson()(filtered, os.Stdout)
 	} else if outputGnuplotCount != "" {
 		logmunch.DrainGnuplotDistinctKeyCount(outputGnuplotCount)(filtered, os.Stdout)
+	} else if outputTableCount != "" {
+		logmunch.DrainCountOverTime(outputTableCount)(filtered, os.Stdout)
 	} else {
 		logmunch.DrainStandard()(filtered, os.Stdout)
 	}
