@@ -95,9 +95,6 @@ func TestParseLines(t *testing.T) {
 				},
 			},
 		},
-
-		// logmunch's own output
-
 	}
 
 	for _, tt := range tests {
