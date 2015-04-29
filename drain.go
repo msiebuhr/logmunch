@@ -155,27 +155,6 @@ plot`))
 		}
 		out.Write([]byte("\n"))
 
-		// Prit header
-		//out.Write([]byte(fmt.Sprintf("TIME\t%s\n", strings.Join(sortedKeys, "\t"))))
-
-		// Loop over timestamps, then keys and print it all
-		/*
-		   stuffs := make([]string, len(sortedKeys) + 1);
-		   for _, t:= range sortedTimestamps {
-		       stuffs[0] = fmt.Sprintf("%d", t.Unix())
-
-		       for i, k := range sortedKeys {
-		           stuffs[i + 1] = "0"
-
-		           if val, ok := data[t][k]; ok {
-		               stuffs[i + 1] = fmt.Sprintf("%d", val)
-		           }
-		       }
-		       out.Write([]byte(strings.Join(stuffs, "\t")))
-		       out.Write([]byte{'\n'})
-		   }
-		*/
-
 		// Loop over timestamps, then keys and print it all
 		for _, k := range sortedKeys {
 			for _, t := range sortedTimestamps {
