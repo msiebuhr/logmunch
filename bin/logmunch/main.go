@@ -17,7 +17,7 @@ var filter string
 var roundTime time.Duration
 var start time.Duration
 var end time.Duration
-var jsonOutput bool
+var outputJson bool
 var filterHerokuLogs bool
 var outputGnuplotCount string
 var outputTableCount string
@@ -37,7 +37,7 @@ func init() {
 	flag.IntVar(&limit, "limit", -1, "How many lines to fetch")
 
 	// Output-control
-	flag.BoolVar(&jsonOutput, "json-output", false, "Output as lines of JSON")
+	flag.BoolVar(&outputJson, "output-json", false, "Output as lines of JSON")
 	flag.StringVar(&outputGnuplotCount, "output-gnuplot-count", "", "Output as lines of Gnuplot of frequency counts")
 	flag.StringVar(&outputTableCount, "output-table-count", "", "Output as table of counts")
 
@@ -132,7 +132,7 @@ func main() {
 
 	go logmunch.FilterLogChan(filters, logs, filtered)
 
-	if jsonOutput {
+	if outputJson {
 		logmunch.DrainJson()(filtered, os.Stdout)
 	} else if outputGnuplotCount != "" {
 		logmunch.DrainGnuplotDistinctKeyCount(outputGnuplotCount)(filtered, os.Stdout)
