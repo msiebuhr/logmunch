@@ -160,13 +160,16 @@ func MakeNormaliseUrlPaths(key string, urlTemplates []string) func(*LogLine) *Lo
 		// TODO: Does it have the key we need to check against?
 
 		for i, re := range regexps {
+			// Get key and dump query-string
+			name := strings.SplitN(in.Entries[key], "?", 2)[0]
+
 			// Check key against regexes
-			if !re.MatchString(in.Entries[key]) {
+			if !re.MatchString(name) {
 				continue
 			}
 
 			subMatchNames := re.SubexpNames()
-			subMatchValues := re.FindStringSubmatch(in.Entries[key])
+			subMatchValues := re.FindStringSubmatch(name)
 
 			for j := 1; j < len(subMatchNames); j += 1 {
 				in.Entries[subMatchNames[j]] = subMatchValues[j]

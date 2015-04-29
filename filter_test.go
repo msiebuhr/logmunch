@@ -66,7 +66,7 @@ func TestCompoundKey(t *testing.T) {
 
 func TestNormailseUrlPaths(t *testing.T) {
 	log := NewLogLine(time.Now(), "what", map[string]string{
-		"path": "/test/user_name/action",
+		"path": "/test/user_name/action?token=should_be_removed",
 	})
 
 	nl := MakeNormaliseUrlPaths("path", []string{"/test/:uid/action", "/test/:uid"})(&log)
