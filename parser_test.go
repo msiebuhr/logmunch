@@ -95,6 +95,22 @@ func TestParseLines(t *testing.T) {
 				},
 			},
 		},
+
+		// Front-end
+		{
+			in: `91.199.145.22 INFO browser.name=IE level=info timestamp='2015-06-09T06:30:19.145Z' msg=session.meaningful participants.length=2`,
+			out: LogLine{
+				Time: time.Date(2015, 6, 9, 6, 30, 19, 145000000, time.UTC),
+				Name: "91.199.145.22 INFO",
+				Entries: map[string]string{
+					//"tokenData": "{}",
+					"msg": "session.meaningful",
+					"participants.length": "2",
+					"browser.name":        "IE",
+					"level":               "info",
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -109,10 +125,10 @@ func TestParseLines(t *testing.T) {
 
 		if !log.Equal(tt.out) {
 			t.Errorf(
-				"Expected line\n\t%s\nto parse as\n\t%s\nbut got\n\t%s",
+				"Expected line\n\t`%s`\nto parse as\n\t`%s`\nbut got\n\t`%s`",
 				tt.in,
-				tt.out.Name,
-				log.Name,
+				tt.out,
+				log,
 			)
 		}
 	}

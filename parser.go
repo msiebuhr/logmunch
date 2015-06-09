@@ -145,6 +145,11 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 		// Try parsing each element in the line as various timestamps and see
 		// what sticks.
 		for i, part := range lineParts {
+			// Seen in front-end logging system: `timestamp='TIMESTAMP'` if it starts with that - strip it
+			if strings.HasPrefix(part, "timestamp='") {
+				part = part[11 : len(part)-1] // Strip `timestamp='` and trailing `'`
+			}
+
 			for _, timefmt := range timeformats {
 				lineTime, err := time.Parse(timefmt, part)
 
