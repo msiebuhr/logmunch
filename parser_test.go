@@ -98,7 +98,7 @@ func TestParseLines(t *testing.T) {
 
 		// Front-end
 		{
-			in: `91.199.145.22 INFO browser.name=IE level=info timestamp='2015-06-09T06:30:19.145Z' msg=session.meaningful participants.length=2`,
+			in: `91.199.145.22 INFO browser.name=IE level=info timestamp='2015-06-09T06:30:19.145Z' msg='session.meaningful' participants.length=2`,
 			out: LogLine{
 				Time: time.Date(2015, 6, 9, 6, 30, 19, 145000000, time.UTC),
 				Name: "91.199.145.22 INFO",

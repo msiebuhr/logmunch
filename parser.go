@@ -43,6 +43,8 @@ func flattenAndStringifyJSON(prefix string, data map[string]interface{}, log *Lo
 			log.Entries[key] = t
 		case map[string]interface{}:
 			flattenAndStringifyJSON(key, t, log)
+		case nil:
+			log.Entries[key] = ""
 		default:
 			//fmt.Println("Doesn't know what to do with", t)
 			log.Entries[key] = fmt.Sprintf("UNSUPPORTED: %+v", t)
@@ -97,6 +99,31 @@ func tryPrefixedLogFmt(line string, log *LogLine) bool {
 	log.Name = line[:lastSpaceBeforeLogFmtWord]
 	logfmt.Unmarshal([]byte(line[lastSpaceBeforeLogFmtWord:]), log)
 	return true
+}
+
+// Check is the line is tick-escaped logfmt
+//
+// If we see `='` more often than `="`, assume things are generally `'`-quoted
+// and swap all `'` for `"`'s and vice versa.
+func tryTicEscapedLogFmt(line string, log *LogLine) bool {
+	equalTics := strings.Count(line, "='")
+	equalQuote := strings.Count(line, "=\"")
+
+	if equalTics > equalQuote {
+		// Swap ticks and quotes
+		line = strings.Map(func(r rune) rune {
+			switch r {
+			case '\'':
+				return '"'
+			case '"':
+				return '\''
+			default:
+				return r
+			}
+		}, line)
+	}
+
+	return tryPrefixedLogFmt(line, log)
 }
 
 func ParseLogEntries(in <-chan string, out chan<- LogLine) {
@@ -179,6 +206,11 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 
 		// Heroku's `d.UUID NAME - - key=val key=val …` format.
 		if ok := tryHerokuLogFmt(restOfLine, &logLine); ok {
+			out <- logLine
+			continue
+		}
+
+		if ok := tryTicEscapedLogFmt(restOfLine, &logLine); ok {
 			out <- logLine
 			continue
 		}
