@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 	"time"
 )
 
-type Drainer func(<-chan LogLine, io.Writer)
+type Drainer func(<-chan LogLine, io.WriteCloser)
 
-func DrainStandard() func(<-chan LogLine, io.Writer) {
-	return func(in <-chan LogLine, out io.Writer) {
+func DrainStandard() func(<-chan LogLine, io.WriteCloser) {
+	return func(in <-chan LogLine, out io.WriteCloser) {
+		defer out.Close()
 		for l := range in {
 			out.Write([]byte(l.String()))
 			out.Write([]byte{'\n'})
@@ -20,7 +22,8 @@ func DrainStandard() func(<-chan LogLine, io.Writer) {
 }
 
 func DrainJson() Drainer {
-	return func(in <-chan LogLine, out io.Writer) {
+	return func(in <-chan LogLine, out io.WriteCloser) {
+		defer out.Close()
 		for l := range in {
 			j, err := json.Marshal(l)
 			if err == nil {
@@ -38,8 +41,9 @@ func (t timeList) Len() int           { return len(t) }
 func (t timeList) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 func (t timeList) Less(i, j int) bool { return t[i].Before(t[j]) }
 
-func DrainCountOverTime(key string) func(<-chan LogLine, io.Writer) {
-	return func(in <-chan LogLine, out io.Writer) {
+func DrainCountOverTime(key string) func(<-chan LogLine, io.WriteCloser) {
+	return func(in <-chan LogLine, out io.WriteCloser) {
+		defer out.Close()
 		keyValues := make(map[string]bool)
 		data := make(map[time.Time]map[string]int)
 
@@ -96,8 +100,9 @@ func DrainCountOverTime(key string) func(<-chan LogLine, io.Writer) {
 	}
 }
 
-func DrainGnuplotDistinctKeyCount(key string) func(<-chan LogLine, io.Writer) {
-	return func(in <-chan LogLine, out io.Writer) {
+func DrainGnuplotDistinctKeyCount(key string) func(<-chan LogLine, io.WriteCloser) {
+	return func(in <-chan LogLine, out io.WriteCloser) {
+		defer out.Close()
 		keyValues := make(map[string]bool)
 		data := make(map[time.Time]map[string]int)
 
@@ -165,6 +170,56 @@ plot`))
 				out.Write([]byte(fmt.Sprintf(" %d\t%d\n", t.Unix(), v)))
 			}
 			out.Write([]byte("EOF\n"))
+		}
+	}
+}
+
+func DrainSqlite3() func(<-chan LogLine, io.WriteCloser) {
+	return func(in <-chan LogLine, out io.WriteCloser) {
+		defer out.Close()
+		data := make([]LogLine, 0)
+		keyNames := make(map[string]bool)
+
+		for l := range in {
+			// Fish out different values of the keys
+			for keyName, _ := range l.Entries {
+				keyNames[keyName] = true
+			}
+
+			data = append(data, l)
+		}
+
+		// Sort the keys
+		sortedKeys := make([]string, 0, len(keyNames))
+		for k := range keyNames {
+			sortedKeys = append(sortedKeys, k)
+		}
+		sort.Strings(sortedKeys)
+
+		// Print GNUPLOT stuffs
+		out.Write([]byte("CREATE TABLE logs (time, unix, name, "))
+		// Join keys and rewrite `.` to `_` (so we don't need escpaing in all cases).
+		out.Write([]byte(strings.Replace(strings.Join(sortedKeys, ", "), ".", "_", -1)))
+		out.Write([]byte(");\n\n"))
+
+		// Loop over timestamps, then keys and print it all
+		for _, k := range data {
+			arr := make([]string, len(sortedKeys))
+			for i, name := range sortedKeys {
+				arr[i] = ""
+				if val, ok := k.Entries[name]; ok {
+					// In Sqlite (and SQL in general, I believe), `'`s are escaped with `''`.
+					arr[i] = strings.Replace(val, "'", "''", -1)
+				}
+			}
+
+			out.Write([]byte(fmt.Sprintf(
+				"INSERT INTO logs VALUES('%s', %d, '%s', '%s');\n",
+				k.Time.Format(time.RFC3339Nano),
+				k.Time.Unix(),
+				k.Name,
+				strings.Join(arr, "', '"),
+			)))
 		}
 	}
 }

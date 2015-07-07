@@ -21,6 +21,7 @@ var outputJson bool
 var filterHerokuLogs bool
 var outputGnuplotCount string
 var outputTableCount string
+var outputSqlite bool
 var limit int
 var bucketizeKeys string
 var normalisePaths string
@@ -38,6 +39,7 @@ func init() {
 
 	// Output-control
 	flag.BoolVar(&outputJson, "output-json", false, "Output as lines of JSON")
+	flag.BoolVar(&outputSqlite, "output-sqlite", false, "Output as SQLite database statements")
 	flag.StringVar(&outputGnuplotCount, "output-gnuplot-count", "", "Output as lines of Gnuplot of frequency counts")
 	flag.StringVar(&outputTableCount, "output-table-count", "", "Output as table of counts")
 
@@ -134,6 +136,8 @@ func main() {
 
 	if outputJson {
 		logmunch.DrainJson()(filtered, os.Stdout)
+	} else if outputSqlite {
+		logmunch.DrainSqlite3()(filtered, os.Stdout)
 	} else if outputGnuplotCount != "" {
 		logmunch.DrainGnuplotDistinctKeyCount(outputGnuplotCount)(filtered, os.Stdout)
 	} else if outputTableCount != "" {
