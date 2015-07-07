@@ -86,7 +86,7 @@ func LogEntriesSource(config *url.URL, query Query, out chan<- string) (Query, e
 
 	// Add filter if one is given
 	if query.Filter != "" {
-		logentriesurl = logentriesurl + "&filter=" + query.Filter
+		logentriesurl = logentriesurl + "&filter=" + url.QueryEscape(query.Filter)
 
 		// Re-set filter, as we process it here
 		query.Filter = ""
