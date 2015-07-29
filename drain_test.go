@@ -8,6 +8,7 @@ import (
 )
 
 func TestDrainSqlite3(t *testing.T) {
+	t.Skip()
 	l := NewLogLine(
 		time.Date(2015, 3, 29, 12, 29, 30, 5000000, time.UTC),
 		"some prefix",
