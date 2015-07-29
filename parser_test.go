@@ -80,6 +80,19 @@ func TestParseLines(t *testing.T) {
 				},
 			},
 		},
+		{
+			in: "183 <45>1 2015-04-07T09:30:14.632370+00:00 d.f12ee345-3239-4fde-8dc6-b5d1c5656c36 heroku api - - Starting process with command `./bin/session_chat_cleaner` by scheduler@addons.heroku.com",
+			out: LogLine{
+				//Time: time.Date(2015, 7, 28, 19, 40, 34, 170547000, time.UTC),
+				Time: time.Date(2015, 4, 7, 9, 30, 14, 632370000, time.UTC),
+				Name: "d.f12ee345-3239-4fde-8dc6-b5d1c5656c36 heroku api",
+				Entries: map[string]string{
+					"syslog.severity": "5",
+					"syslog.facility": "5",
+					"message":         "Starting process with command `./bin/session_chat_cleaner` by scheduler@addons.heroku.com",
+				},
+			},
+		},
 
 		// Node.js' Winston output
 		{

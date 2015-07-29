@@ -101,6 +101,25 @@ func tryPrefixedLogFmt(line string, log *LogLine) bool {
 	return true
 }
 
+func tryPlainMessage(line string, log *LogLine) bool {
+	// Name is everything until ` - - `; logfmt follows after
+	dashIndex := strings.Index(line, " - - ")
+	if dashIndex == -1 {
+		return false
+	}
+
+	equalDoubleQuoteIndex := strings.Index(line, "=\"")
+	equalSingleQuoteIndex := strings.Index(line, "='")
+
+	if equalDoubleQuoteIndex != -1 || equalSingleQuoteIndex != -1 {
+		return false
+	}
+
+	log.Name = line[:dashIndex]
+	log.Entries["message"] = line[dashIndex+len(" - - "):]
+	return true
+}
+
 // Check is the line is tick-escaped logfmt
 //
 // If we see `='` more often than `="`, assume things are generally `'`-quoted
@@ -202,6 +221,12 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 		}
 
 		restOfLine := strings.Join(lineParts, " ")
+
+		// Plain old SOMETHING - - MESSAGE GOES HERE
+		if ok := tryPlainMessage(restOfLine, &logLine); ok {
+			out <- logLine
+			continue
+		}
 
 		// The somewhat popular `NAME {… JSON …}`
 		if ok := tryParseOutJSON(restOfLine, &logLine); ok {
