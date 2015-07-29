@@ -187,7 +187,7 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 
 				if err == nil {
 					logLine.Time = lineTime
-					newLine := make([]string, len(lineParts))
+					newLine := make([]string, len(lineParts)-1)
 					copy(newLine[:i], lineParts[:i])
 					copy(newLine[i:], lineParts[i+1:])
 					lineParts = newLine
