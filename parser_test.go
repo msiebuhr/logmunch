@@ -93,6 +93,25 @@ func TestParseLines(t *testing.T) {
 				},
 			},
 		},
+		{
+			// No quotes around anything!
+			in: `<158>1 2015-03-20T19:22:56.023454+00:00 d.f12ee345-3239-4fde-8dc6-b5d1c5656c36 heroku router - - at=info method=POST dyno=web.2 connect=1ms service=4ms status=200 bytes=455`,
+			out: LogLine{
+				Time: time.Date(2015, 3, 20, 19, 22, 56, 23454000, time.UTC),
+				Name: "d.f12ee345-3239-4fde-8dc6-b5d1c5656c36 heroku router",
+				Entries: map[string]string{
+					"at":              "info",
+					"method":          "POST",
+					"dyno":            "web.2",
+					"connect":         "1ms",
+					"service":         "4ms",
+					"status":          "200",
+					"bytes":           "455",
+					"syslog.severity": "6",
+					"syslog.facility": "19",
+				},
+			},
+		},
 
 		// Node.js' Winston output
 		{

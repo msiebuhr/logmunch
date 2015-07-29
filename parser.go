@@ -108,10 +108,9 @@ func tryPlainMessage(line string, log *LogLine) bool {
 		return false
 	}
 
-	equalDoubleQuoteIndex := strings.Index(line, "=\"")
-	equalSingleQuoteIndex := strings.Index(line, "='")
+	hasEquals := strings.Index(line, "=")
 
-	if equalDoubleQuoteIndex != -1 || equalSingleQuoteIndex != -1 {
+	if hasEquals != -1 {
 		return false
 	}
 
