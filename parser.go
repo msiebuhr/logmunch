@@ -129,6 +129,11 @@ func tryTicEscapedLogFmt(line string, log *LogLine) bool {
 func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 	defer close(out)
 	for line := range in {
+		// Skip empty lines
+		if line == "" {
+			continue
+		}
+
 		logLine := LogLine{
 			Entries: make(map[string]string),
 		}

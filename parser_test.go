@@ -133,3 +133,24 @@ func TestParseLines(t *testing.T) {
 		}
 	}
 }
+
+func TestParseInvalidLines(t *testing.T) {
+	var tests = []string{
+		"",
+	}
+
+	for _, tt := range tests {
+		in := make(chan string)
+		out := make(chan LogLine)
+
+		go ParseLogEntries(in, out)
+
+		in <- tt
+		close(in)
+
+		for log := range out {
+			t.Errorf("Line %s returned unexpected LogLine %v\n", tt, log)
+		}
+	}
+
+}
