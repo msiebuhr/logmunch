@@ -1,0 +1,1 @@
+296 <158>1 2015-03-20T19:22:56.023454+00:00 d.f12ee345-3239-4fde-8dc6-b5d1c5656c36 heroku router - - at=info method=POST path="/v1/oauth/token" host=api.g2m.me request_id=4ce69d2b-fd28-44f0-809c-05e192a0b2e0 fwd="54.160.189.106,173.245.56.103" dyno=web.2 connect=1ms service=4ms status=200 bytes=455
