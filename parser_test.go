@@ -113,6 +113,26 @@ func TestParseLines(t *testing.T) {
 			},
 		},
 
+		// New-relic output through winston + logentries
+		{
+			in: `290 <190>1 2015-07-29T07:01:24.756617+00:00 d.f12ee345-3239-4fde-8dc6-b5d1c5656c36 app scheduler.8962 - - {"v":0,"level":30,"name":"newrelic","hostname":"4350e3de-046d-4faf-b381-0361e797301d","pid":3,"time":"2015-07-29T07:01:24.755Z","msg":"Starting New Relic for Node.js connection process."}`,
+			out: LogLine{
+				Time: time.Date(2015, 7, 29, 7, 1, 24, 756617000, time.UTC),
+				Name: "d.f12ee345-3239-4fde-8dc6-b5d1c5656c36 app scheduler.8962",
+				Entries: map[string]string{
+					"v":               "0",
+					"level":           "30",
+					"name":            "newrelic",
+					"hostname":        "4350e3de-046d-4faf-b381-0361e797301d",
+					"pid":             "3",
+					"time":            "2015-07-29T07:01:24.755Z",
+					"msg":             "Starting New Relic for Node.js connection process.",
+					"syslog.severity": "6",
+					"syslog.facility": "23",
+				},
+			},
+		},
+
 		// Node.js' Winston output
 		{
 			in: `2015-03-20T19:30:35.520Z info middleware.auth.jwt.success {"tokenData":{},"clientId":"g2m-free-web","requestId":"798bbab8-7544-4513-9943-26cfdddec183","dyno":"web.1"}`,

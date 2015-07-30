@@ -57,6 +57,7 @@ func tryParseOutJSON(line string, log *LogLine) bool {
 	if curlyIndex == -1 {
 		return false
 	}
+
 	interfaceMap := make(map[string]interface{})
 	err := json.Unmarshal([]byte(line[curlyIndex:]), &interfaceMap)
 
@@ -65,7 +66,7 @@ func tryParseOutJSON(line string, log *LogLine) bool {
 	}
 
 	// Set line prefix and flatten JSON to one level of strings
-	log.Name = strings.Trim(line[:curlyIndex], " \t")
+	log.Name = strings.Trim(line[:curlyIndex], " \t-")
 	flattenAndStringifyJSON("", interfaceMap, log)
 
 	return true
@@ -76,6 +77,13 @@ func tryHerokuLogFmt(line string, log *LogLine) bool {
 	// Name is everything until ` - - `; logfmt follows after
 	dashIndex := strings.Index(line, " - - ")
 	if dashIndex == -1 {
+		return false
+	}
+
+	// After the dashes, there should at least be three (chosen at random) =-signs
+	equals := strings.Count(line[dashIndex+5:], "=")
+
+	if equals < 3 {
 		return false
 	}
 
@@ -94,6 +102,11 @@ func tryPrefixedLogFmt(line string, log *LogLine) bool {
 		}
 		if unicode.IsSpace(letter) {
 			lastSpaceBeforeLogFmtWord = i
+		}
+
+		// We got to the end without breaking on a = -> There's no = -> no logfmt in here
+		if i == len(line)-1 {
+			return false
 		}
 	}
 	log.Name = line[:lastSpaceBeforeLogFmtWord]
@@ -126,6 +139,11 @@ func tryPlainMessage(line string, log *LogLine) bool {
 func tryTicEscapedLogFmt(line string, log *LogLine) bool {
 	equalTics := strings.Count(line, "='")
 	equalQuote := strings.Count(line, "=\"")
+
+	// Break if we find no equals-things
+	if equalTics == 0 {
+		return false
+	}
 
 	if equalTics > equalQuote {
 		// Swap ticks and quotes
@@ -221,12 +239,6 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 
 		restOfLine := strings.Join(lineParts, " ")
 
-		// Plain old SOMETHING - - MESSAGE GOES HERE
-		if ok := tryPlainMessage(restOfLine, &logLine); ok {
-			out <- logLine
-			continue
-		}
-
 		// The somewhat popular `NAME {… JSON …}`
 		if ok := tryParseOutJSON(restOfLine, &logLine); ok {
 			out <- logLine
@@ -239,13 +251,20 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 			continue
 		}
 
+		// Logentries serialize with a='b' (not a="b")
 		if ok := tryTicEscapedLogFmt(restOfLine, &logLine); ok {
 			out <- logLine
 			continue
 		}
 
-		// Give up. `THINGS WITHOUT EQUALS key=value key=value …`
-		tryPrefixedLogFmt(restOfLine, &logLine)
+		// Some prefix text and=then some=logfmt
+		if ok := tryPrefixedLogFmt(restOfLine, &logLine); ok {
+			out <- logLine
+			continue
+		}
+
+		// Give up. ` SOMETHING - - MESSAGE GOES HERE`
+		tryPlainMessage(restOfLine, &logLine)
 		out <- logLine
 	}
 }
