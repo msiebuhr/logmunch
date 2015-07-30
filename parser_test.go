@@ -188,7 +188,9 @@ func TestParseLines(t *testing.T) {
 
 func TestParseInvalidLines(t *testing.T) {
 	var tests = []string{
+		// Found by go-fuzz
 		"",
+		"d",
 	}
 
 	for _, tt := range tests {
