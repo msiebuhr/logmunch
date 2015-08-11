@@ -22,6 +22,7 @@ var filterHerokuLogs bool
 var outputGnuplotCount string
 var outputTableCount string
 var outputSqlite bool
+var outputCSV string
 var limit int
 var bucketizeKeys string
 var normalisePaths string
@@ -42,6 +43,7 @@ func init() {
 	flag.BoolVar(&outputSqlite, "output-sqlite", false, "Output as SQLite database statements")
 	flag.StringVar(&outputGnuplotCount, "output-gnuplot-count", "", "Output as lines of Gnuplot of frequency counts")
 	flag.StringVar(&outputTableCount, "output-table-count", "", "Output as table of counts")
+	flag.StringVar(&outputCSV, "output-csv", "", "Output at CSV, joined by the given string")
 
 	// Filtering
 	flag.DurationVar(&roundTime, "round-time", time.Nanosecond, "Round timestamps to nearest (ex: '1h10m')")
@@ -142,6 +144,8 @@ func main() {
 		logmunch.DrainGnuplotDistinctKeyCount(outputGnuplotCount)(filtered, os.Stdout)
 	} else if outputTableCount != "" {
 		logmunch.DrainCountOverTime(outputTableCount)(filtered, os.Stdout)
+	} else if outputCSV != "" {
+		logmunch.DrainCSV(outputCSV)(filtered, os.Stdout)
 	} else {
 		logmunch.DrainStandard()(filtered, os.Stdout)
 	}

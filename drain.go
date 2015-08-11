@@ -223,3 +223,58 @@ func DrainSqlite3() func(<-chan LogLine, io.WriteCloser) {
 		}
 	}
 }
+
+func DrainCSV(join string) func(<-chan LogLine, io.WriteCloser) {
+	return func(in <-chan LogLine, out io.WriteCloser) {
+		defer out.Close()
+		data := make([]LogLine, 0)
+		keyNames := make(map[string]bool)
+
+		for l := range in {
+			// Fish out different values of the keys
+			for keyName, _ := range l.Entries {
+				keyNames[keyName] = true
+			}
+
+			data = append(data, l)
+		}
+
+		// Sort the keys
+		sortedKeys := make([]string, 0, len(keyNames))
+		for k := range keyNames {
+			sortedKeys = append(sortedKeys, k)
+		}
+		sort.Strings(sortedKeys)
+
+		// Print GNUPLOT stuffs
+		out.Write([]byte("#"))
+		// Join keys and rewrite `.` to `_` (so we don't need escpaing in all cases).
+		out.Write([]byte("time"))
+		out.Write([]byte(join))
+		out.Write([]byte("unixtime"))
+		out.Write([]byte(join))
+		out.Write([]byte("name"))
+		out.Write([]byte(join))
+		out.Write([]byte(strings.Join(sortedKeys, join)))
+		out.Write([]byte("\n"))
+
+		// Loop over timestamps, then keys and print it all
+		for _, k := range data {
+			arr := make([]string, len(sortedKeys)+3)
+
+			arr[0] = k.Time.Format(time.RFC3339Nano)
+			arr[1] = fmt.Sprint(k.Time.Unix())
+			arr[2] = k.Name
+
+			for i, name := range sortedKeys {
+				arr[i+3] = ""
+				if val, ok := k.Entries[name]; ok {
+					arr[i+3] = val
+				}
+			}
+
+			out.Write([]byte(strings.Join(arr, join)))
+			out.Write([]byte("\n"))
+		}
+	}
+}
