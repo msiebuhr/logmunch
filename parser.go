@@ -264,7 +264,13 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 		}
 
 		// Give up. ` SOMETHING - - MESSAGE GOES HERE`
-		tryPlainMessage(restOfLine, &logLine)
+		if ok := tryPlainMessage(restOfLine, &logLine); ok {
+			out <- logLine
+			continue
+		}
+
+		// Really really give up.
+		logLine.Name = restOfLine
 		out <- logLine
 	}
 }

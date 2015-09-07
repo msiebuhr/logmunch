@@ -147,6 +147,14 @@ func TestParseLines(t *testing.T) {
 				},
 			},
 		},
+		{
+			in: `2015-09-01T16:04:42.747Z info server.recent-sessions.done`,
+			out: LogLine{
+				Time:    time.Date(2015, 9, 1, 16, 4, 42, 747000000, time.UTC),
+				Name:    "info server.recent-sessions.done",
+				Entries: map[string]string{},
+			},
+		},
 
 		// Front-end
 		{
