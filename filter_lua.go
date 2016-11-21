@@ -14,20 +14,18 @@ func filterLineByLua(prog string, line *LogLine) (bool, error) {
 
 	// Push timestamp a few times
 	l.PushNumber(float64(line.Time.Unix()))
-	l.SetGlobal("time")
+	l.SetGlobal("_time")
 
 	l.PushNumber(float64(line.Time.UnixNano() / 1e6))
-	l.SetGlobal("time_milli")
+	l.SetGlobal("_time_ms")
 
 
 	// Push name
 	l.PushString(line.Name)
-	l.SetGlobal("name")
+	l.SetGlobal("_name")
 
 	// Set key/values from line
-	l.NewTable()
 	for k, v := range line.Entries {
-		l.PushString(k)
 		// Can it be passed as a number?
 		f, err := strconv.ParseFloat(v, 64)
 		if err != nil {
@@ -35,9 +33,8 @@ func filterLineByLua(prog string, line *LogLine) (bool, error) {
 		} else {
 			l.PushNumber(f)
 		}
-		l.SetTable(-3)
+		l.SetGlobal(k)
 	}
-	l.SetGlobal("entries")
 
 	// Make sure this is prefixed with "return", thus creating an anonymous
 	// function

@@ -17,18 +17,24 @@ func TestLuaFilter(t *testing.T) {
 		keep bool
 		err bool
 	}{
+		{ prog: "_time > 0", keep: true, err: false },
+		{ prog: "_time_ms > 0", keep: true, err: false },
+		{ prog: "_time_ms < 0", keep: false, err: false },
+
+		{ prog: "_name == 'heroku web.1'", keep: true, err: false },
+
 		{ prog: "true", keep: true, err: false },
 		{ prog: "false", keep: false, err:false  },
 
-		{ prog: "entries.load == 99", keep: false, err: false},
+		{ prog: "load == 99", keep: false, err: false},
 
-		{ prog: "entries.load > 100", keep: false, err: false},
-		{ prog: "entries.load >= 100", keep: true, err: false},
-		{ prog: "entries.load == 100", keep: true, err: false},
-		{ prog: "entries.load <= 100", keep: true, err: false},
-		{ prog: "entries.load < 100", keep: false, err: false},
+		{ prog: "load > 100", keep: false, err: false},
+		{ prog: "load >= 100", keep: true, err: false},
+		{ prog: "load == 100", keep: true, err: false},
+		{ prog: "load <= 100", keep: true, err: false},
+		{ prog: "load < 100", keep: false, err: false},
 
-		{ prog: "entries.load == 101", keep: false, err: false},
+		{ prog: "load == 101", keep: false, err: false},
 	}
 
 	for _, tt := range tests {
