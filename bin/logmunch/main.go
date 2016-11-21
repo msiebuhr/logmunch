@@ -28,10 +28,12 @@ var bucketizeKeys string
 var normalisePaths string
 var pickKeys string
 var compoundKeys string
+var luaFilter string
 
 func init() {
 	flag.StringVar(&source, "source", "file:-", "Log source (default: stdin)")
 	flag.StringVar(&filter, "filter", "", "Prefix to fetch")
+	flag.StringVar(&filter, "lua-filter", "", "LUA code to filter by (ex. `load > 0.1 and _time_ms > 1234`)")
 
 	flag.DurationVar(&start, "start", time.Hour*-24, "When to start fetching data")
 	flag.DurationVar(&end, "end", time.Duration(0), "When to stop fetching data")
@@ -132,6 +134,10 @@ func main() {
 
 	if roundTime != 0 {
 		filters = append(filters, logmunch.MakeRoundTimestampFilter(roundTime))
+	}
+
+	if luaFilter != "" {
+		filters = append(filters, logmunch.MakeLuaFilter(luaFilter))
 	}
 
 	go logmunch.FilterLogChan(filters, logs, filtered)
