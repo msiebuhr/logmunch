@@ -2,6 +2,7 @@ package logmunch
 
 import (
 	"net/url"
+	"sync"
 	"testing"
 )
 
@@ -38,14 +39,17 @@ func TestSourceLoaderGetData(t *testing.T) {
 			},
 		},
 	}
+	var wg sync.WaitGroup
 
 	out := make(chan string, 0)
 	lines := make([]string, 0)
 
 	go func() {
+		wg.Add(1)
 		for line := range out {
 			lines = append(lines, line)
 		}
+		wg.Done()
 	}()
 
 	_, err := s.GetData("file:/./source_test.go", Query{}, out)
@@ -53,6 +57,8 @@ func TestSourceLoaderGetData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("s.GetData() error: '%s'.", err)
 	}
+
+	wg.Wait()
 
 	if len(lines) == 0 {
 		t.Errorf("No lines fetched")
