@@ -1,0 +1,16 @@
+version: 2
+jobs:
+    build:
+        working_directory: /go/src/github.com/msiebuhr/logmunch
+
+        docker:
+            - image: golang:latest
+
+        steps:
+            - checkout
+            - run:
+                command: go get -v ./...
+            - run:
+                command: go test ./... | tee > /tmp/test-results
+            - store_test_results:
+                path: /tmp/test-results
