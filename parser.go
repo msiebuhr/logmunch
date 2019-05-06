@@ -3,6 +3,7 @@ package logmunch
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -233,7 +234,7 @@ func ParseLogEntries(in <-chan string, out chan<- LogLine) {
 		}
 
 		if logLine.Time.IsZero() {
-			fmt.Printf("Counld not find timestamp in line `%s`.\n", line)
+			fmt.Fprintf(os.Stderr, "Could not find timestamp in line `%s`.\n", line)
 			continue
 		}
 
