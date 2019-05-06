@@ -13,7 +13,7 @@ func TestFuzz(t *testing.T) {
 		st := Fuzz(tt)
 
 		if st != 1 {
-			t.Errorf("Expected %s to be interesting (=1), got %d", t, st)
+			t.Errorf("Expected %s to be interesting (=1), got %d", tt, st)
 		}
 	}
 
@@ -25,7 +25,7 @@ func TestFuzz(t *testing.T) {
 		st := Fuzz(tt)
 
 		if st == 1 {
-			t.Errorf("Expected %s to be interesting (!=1), got %d", t, st)
+			t.Errorf("Expected %s to be interesting (!=1), got %d", tt, st)
 		}
 	}
 
