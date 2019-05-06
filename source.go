@@ -104,8 +104,8 @@ func LogEntriesSource(config *url.URL, query Query, out chan<- string) (Query, e
 	if err != nil {
 		close(out)
 		return query, err
-	} else if (resp.StatusCode != 200) {
-		return query, fmt.Errorf("Logentries returned HTTP %d for %s", resp.StatusCode , logentriesurl)
+	} else if resp.StatusCode != 200 {
+		return query, fmt.Errorf("Logentries returned HTTP %d for %s", resp.StatusCode, logentriesurl)
 	}
 
 	err = outputLinesAndCloseChan(resp.Body, out)

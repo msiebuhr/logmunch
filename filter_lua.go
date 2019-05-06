@@ -3,12 +3,13 @@ package logmunch
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/shopify/go-lua"
 )
 
 func filterLineByLua(prog string, line *LogLine) (bool, error) {
-	l := lua.NewState()  // new VM instance
+	l := lua.NewState() // new VM instance
 	//lua.OpenLibraries(l) // register standard libraries
 	//lua.BaseOpen(l)
 
@@ -19,13 +20,13 @@ func filterLineByLua(prog string, line *LogLine) (bool, error) {
 	l.PushNumber(float64(line.Time.UnixNano() / 1e6))
 	l.SetGlobal("_time_ms")
 
-
 	// Push name
 	l.PushString(line.Name)
 	l.SetGlobal("_name")
 
 	// Set key/values from line
 	for k, v := range line.Entries {
+		k = strings.Replace(k, ".", "_", -1)
 		// Can it be passed as a number?
 		f, err := strconv.ParseFloat(v, 64)
 		if err != nil {
@@ -38,9 +39,9 @@ func filterLineByLua(prog string, line *LogLine) (bool, error) {
 
 	// Make sure this is prefixed with "return", thus creating an anonymous
 	// function
-	err := lua.DoString(l, "return " + prog)
+	err := lua.DoString(l, "return "+prog)
 	if err != nil {
-		return false, fmt.Errorf("Cannot parse LUA: `return %s`", prog)
+		return false, fmt.Errorf("Cannot parse LUA: `return %s`: %s", prog, err)
 	}
 
 	// Call the anonymous function, expecting one return value

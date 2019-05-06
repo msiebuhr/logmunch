@@ -164,7 +164,7 @@ func TestParseLines(t *testing.T) {
 				Name: "91.199.145.22 INFO",
 				Entries: map[string]string{
 					//"tokenData": "{}",
-					"msg": "session.meaningful",
+					"msg":                 "session.meaningful",
 					"participants.length": "2",
 					"browser.name":        "IE",
 					"level":               "info",
