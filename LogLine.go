@@ -32,6 +32,7 @@ func (l *LogLine) String() string {
 
 	// Key-value pairs
 	for key, value := range l.Entries {
+		value = strings.ReplaceAll(value, "\n", "\\n")
 		if strings.Contains(value, " ") {
 			value = fmt.Sprintf(`"%s"`, value)
 		}
